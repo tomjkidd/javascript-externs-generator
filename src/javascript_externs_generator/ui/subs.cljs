@@ -42,3 +42,8 @@
   :alert
   (fn [db]
     (reaction (:alert @db))))
+
+(rf/register-sub
+ :file-list-text
+ (fn [db]
+   (reaction (:file-list-text @db))))

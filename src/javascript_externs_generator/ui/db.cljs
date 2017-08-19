@@ -7,4 +7,5 @@
                     :namespace-text ""
                     :alert {:heading ""
                             :text ""}
-                    :loading-js false})
+                    :loading-js false
+                    :file-list-text ""})

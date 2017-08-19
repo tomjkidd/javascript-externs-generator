@@ -117,3 +117,9 @@
   [default-middleware]
   (fn [db [namespace-text]]
     (assoc db :namespace-text namespace-text)))
+
+(rf/register-handler
+ :file-list-text-change
+ [default-middleware]
+ (fn [db [file-list-text]]
+   (assoc db :file-list-text file-list-text)))
