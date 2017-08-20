@@ -6,15 +6,22 @@
             [goog.object :as obj]
             [cljsjs.js-beautify]
             [javascript-externs-generator.ui.db :refer [default-state]]
-            [javascript-externs-generator.extern :refer [extract-loaded]]))
+            [javascript-externs-generator.extern :refer [extract-loaded]]
+            [goog.html.legacyconversions :as lc]))
 
 (def default-middleware [rf/trim-v])
 
 (defn load-script [url success err]
   (let [sandbox (dom/getElement "sandbox")
-        options #js {:document (obj/get sandbox "contentDocument")}]
-    (-> (jsloader/load url options)
-        (.addCallbacks success err))))
+        options #js {:document (obj/get sandbox "contentDocument")}
+        ld (jsloader/safeLoad (lc/trustedResourceUrlFromString url) options)]
+    (.addCallbacks ld success err)))
+
+(defn load-scripts [urls]
+  (let [trusted-uris (mapv #(goog.html.legacyconversions/trustedResourceUrlFromString %) urls)
+        sandbox (dom/getElement "sandbox")
+        options (clj->js {:document   (obj/get sandbox "contentDocument")})]
+    (jsloader/safeLoadMany (clj->js trusted-uris) options)))
 
 (defn error-string [error]
   (let [check-console "Check console for stack trace."]
