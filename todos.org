@@ -1,0 +1,47 @@
+* TODO Create simplified workflow
+
+** Motivation
+
+I was attempting to update the react-datepicker to version 0.53.0, and while working out which dependencies I needed to get the DatePicker extern to generate, I found myself frustrated because I had to process 5 files, one-at-a-time, every time I wanted to test changes.
+The javascript-externs-generator does all the heavy lifting already, so I decided to use all of that existing code to actually perform the loading of js files and the creation of an extern.
+But I wanted to do it using a simplified workflow that allows you to specify all of the urls at once.
+
+** DONE Design simplified workflow
+
+The workflow I want is to just have two text inputs
+- One for a \newline separated list of urls that correspond to files to load
+- One for the object namespace that you are trying to `extern`
+
+Then, clicking an `Extern!` button does all the work, including sane error handling.
+
+** DONE Stub out pipeline for simplified format
+
+This part entailed a design that used a reduce pipeline to create a simple workflow that to stub out some functions to allow more details to be filled in.
+
+** DONE Proof-of-concept using deferreds and console
+
+This piece took the stubbed-out version and built it into a working version of the simplifided workflow that reports to console.
+It is notable that `handlers/load-script` returns a `goog.async.Deferred` object.
+This made it so that I changed the pipeline functions to also work with deferred, creating an async pipeline.
+This is actually pretty neat, because I made it so that I could try to get all of the files, and collect all of the errors and not try to generate an extern in the case that there are any.
+
+** TODO Proof-of-concept integration of output into the UI
+
+This entails displaying the error/extern information in the UI in addition to the console so that the console doesn't need to be used.
+
+*** TODO Increase default width of inputs
+*** TODO Add/reuse event for when extern is generated
+
+** TODO Clean up of Proof-of-concept code
+
+This entails moving it to fit the structure of the existing project
+
+** TODO Update readme
+
+This workflow is meant to offer a replacement that I'll maintain on a fork, which will be kept up to date with the original.
+
+** TODO Update css
+
+Make it look pretty.
+http://paletton.com/#uid=2000u0kllllaFw0g0qFqFg0w0aF
+http://paletton.com/#uid=20t0u0ktPpmkcvIpxtvwwkLF-fC

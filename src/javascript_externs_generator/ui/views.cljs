@@ -1,7 +1,10 @@
 (ns javascript-externs-generator.ui.views
   (:require [re-frame.core :as rf]
             [clojure.string :as string]
-            [re-com.core :as rc]))
+            [re-com.core :as rc]
+            [goog.async.Deferred]
+            [javascript-externs-generator.ui.handlers :as handlers]
+            [javascript-externs-generator.extern :refer [extract-loaded]]))
 
 (defn alert-box []
   (let [alert (rf/subscribe [:alert])]
@@ -118,41 +121,93 @@
 
               [externed-namespaces]]])
 
-(defn display-errors
-  [errors]
-  (.error js/console errors))
-
-(defn pipeline-parse-file-list-text
-  [{:keys [file-list-text] :as acc}]
-  (assoc acc :file-list (mapv string/trim (string/split file-list-text \newline))))
-
-(defn pipeline-load-js-files
-  [{:keys [file-list] :as acc}]
-  ;; TODO: use load-script guts to serially process file-list
-  acc)
-
-(defn pipeline-generate-extern
-  [{:keys [namespace-text] :as acc}]
-  ;; TODO: use generate extern guts to try to create extern
-  acc)
-
 (defn intercept
   [x]
   (.warn js/console x))
 
+(defn ->deferred
+  [x]
+  (goog.async.Deferred/when
+      x
+    identity))
+
+(defn display-errors
+  [acc]
+  (.error js/console ":errors detected")
+  (.error js/console (clj->js (:errors acc)))
+  (.error js/console (clj->js acc)))
+
+(defn display-success
+  [acc]
+  (.log js/console ":no errors, yay")
+  (.log js/console (:extern acc))
+  (.log js/console (clj->js acc)))
+
+(defn pipeline-parse-file-list-text
+  [{:keys [file-list-text] :as acc}]
+  (assoc acc :file-list (remove
+                         string/blank?
+                         (mapv string/trim (string/split file-list-text \newline)))))
+
+(defn pipeline-load-js-files
+  "Attempt to load the file-list files sequentially, capturing any load errors."
+  [acc]
+  (goog.async.Deferred/when
+      acc
+    (fn [{:keys [file-list] :as acc}]
+      (let [load-js-deferreds (mapv #(handlers/load-script
+                                      %
+                                      (fn success [f] f)
+                                      (fn error [err] err))
+                                    file-list)
+            load-all-js-deferred
+            (reduce (fn [acc-deferred load-js-deferred]
+                      (.addCallbacks
+                       load-js-deferred
+                       (fn success [f]
+                         acc-deferred)
+                       (fn error [err]
+                         (goog.async.Deferred/when
+                             acc-deferred
+                           (fn [acc]
+                             (update-in acc [:errors] conj (-> err .-message)))))))
+                    (->deferred acc)
+                    load-js-deferreds)]
+        load-all-js-deferred))))
+
+(defn pipeline-generate-extern
+  [{:keys [namespace-text] :as acc}]
+  ;; NOTE: It is assumed that pipeline-load-js-files was run with no errors
+  ;; before this is run. That fn generates no tangible artifacts, and will
+  ;; terminate when there are any errors.
+  (try
+    (assoc acc :extern (handlers/beautify (extract-loaded namespace-text)))
+    (catch :default e
+      (update-in acc [:errors] conj (handlers/error-string e)))))
+
 (defn generate-extern-pipeline
   [file-list-text namespace-text]
-  (reduce (fn [acc cur]
-            (intercept acc)
-            (if-let [errors (:errors acc)]
-              (display-errors errors)
-              (cur acc)))
-          {:file-list-text file-list-text
-           :namespace-text namespace-text}
-          [pipeline-parse-file-list-text
-           pipeline-load-js-files
-           pipeline-generate-extern
-           identity]))
+  (goog.async.Deferred/when
+      (reduce (fn [deferred-acc cur]
+                (.addCallback deferred-acc
+                              (fn [acc]
+                                ;; wrap to ensure return a deferred acc
+                                (if (seq (:errors acc))
+                                  (->deferred acc)
+                                  (->deferred (cur acc))))))
+              (goog.async.Deferred/when
+                  {:file-list-text file-list-text
+                   :namespace-text namespace-text
+                   :errors []}
+                  identity)
+              [pipeline-parse-file-list-text
+               pipeline-load-js-files
+               pipeline-generate-extern
+               identity])
+    (fn [acc]
+      (if (seq (:errors acc))
+        (display-errors acc)
+        (display-success acc)))))
 
 (defn tk-extern-generator []
   (let [file-list-text (rf/subscribe [:file-list-text])
