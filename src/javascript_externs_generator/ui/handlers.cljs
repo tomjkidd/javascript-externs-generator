@@ -130,3 +130,15 @@
  [default-middleware]
  (fn [db [file-list-text]]
    (assoc db :file-list-text file-list-text)))
+
+(rf/register-handler
+ :externed-output-change
+ [default-middleware]
+ (fn [db [externed-output]]
+   (assoc db :externed-output externed-output)))
+
+(rf/register-handler
+ :error-output-change
+ [default-middleware]
+ (fn [db [error-output]]
+   (assoc db :error-output error-output)))

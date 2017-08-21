@@ -8,4 +8,6 @@
                     :alert {:heading ""
                             :text ""}
                     :loading-js false
-                    :file-list-text ""})
+                    :file-list-text ""
+                    :externed-output ""
+                    :error-output ""})

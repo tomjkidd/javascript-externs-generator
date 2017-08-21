@@ -3,8 +3,6 @@
             [clojure.string :as string]
             [re-com.core :as rc]
             [goog.async.Deferred]
-            [goog.async.Delay]
-            [goog.object]
             [javascript-externs-generator.ui.handlers :as handlers]
             [javascript-externs-generator.extern :refer [extract-loaded]]))
 
@@ -28,6 +26,34 @@
        :on-change #()
        :width "100%"
        :rows 25])))
+
+(defn externed-output []
+  (let [extern (rf/subscribe [:externed-output])]
+    (fn []
+      (when-not (string/blank? @extern)
+        [:div
+         [rc/title
+          :label "Extern Output:"
+          :level :level3]
+         [rc/input-textarea
+          :model extern
+          :on-change #()
+          :width "100%"
+          :rows 25]]))))
+
+(defn error-output []
+  (let [error (rf/subscribe [:error-output])]
+    (fn []
+      (when-not (string/blank? @error)
+        [:div
+         [rc/title
+          :label "Error Output:"
+          :level :level3]
+         [rc/input-textarea
+          :model error
+          :on-change #()
+          :width "100%"
+          :rows 25]]))))
 
 (defn loading-js []
   (let [loading (rf/subscribe [:loading-js])]
@@ -137,12 +163,16 @@
 
 (defn display-errors
   [acc]
+  (rf/dispatch [:externed-output-change (:extern acc)])
+  (rf/dispatch [:error-output-change (string/join \newline (:errors acc))])
   (.error js/console ":errors detected")
   (.error js/console (clj->js (:errors acc)))
   (.error js/console (clj->js acc)))
 
 (defn display-success
   [acc]
+  (rf/dispatch [:externed-output-change (:extern acc)])
+  (rf/dispatch [:error-output-change (string/join \newline (:errors acc))])
   (.log js/console ":no errors, yay")
   (.log js/console (:extern acc))
   (.log js/console (clj->js acc)))
@@ -215,7 +245,10 @@
        (display-errors acc)
        (display-success acc)))))
 
-(defn tk-extern-generator []
+(defn extern-generator-remix
+  "This is an alternate take on the original UI that is optimized for inputing a series
+  of files in dependency order all at once."
+  []
   (let [file-list-text (rf/subscribe [:file-list-text])
         namespace-text (rf/subscribe [:namespace-text])]
     (fn []
@@ -241,4 +274,7 @@
                     :on-change #(rf/dispatch [:namespace-text-change %])]]
                   [rc/button
                    :label "Extern!"
-                   :on-click #(generate-extern-pipeline @file-list-text @namespace-text)]]])))
+                   :on-click #(generate-extern-pipeline @file-list-text @namespace-text)]
+                  [externed-output]
+                  [error-output]
+                  ]])))
