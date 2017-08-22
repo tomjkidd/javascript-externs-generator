@@ -19,3 +19,31 @@
 .md-close:before {
     content: "\f29a"
 }
+
+.h1.title {
+
+}
+
+.rc-line {
+
+}
+
+.h3.instruction {
+  color: #aaa;
+  margin-top: 0px;
+  margin-bottom: 10px;
+  font-size: 1.2em;
+  font-weight: 400;
+}
+
+body {
+
+}
+
+.error {
+  color: #AA3939 !important;
+}
+
+.success {
+  color: #2D882D !important;
+}

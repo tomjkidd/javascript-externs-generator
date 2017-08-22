@@ -4,7 +4,7 @@
             [re-com.core :as rc]
             [goog.async.Deferred]
             [javascript-externs-generator.ui.handlers :as handlers]
-            [javascript-externs-generator.extern :refer [extract-loaded]]))
+            [javascript-externs-generator.extern :refer [extract-loaded-remix]]))
 
 (defn alert-box []
   (let [alert (rf/subscribe [:alert])]
@@ -30,30 +30,28 @@
 (defn externed-output []
   (let [extern (rf/subscribe [:externed-output])]
     (fn []
-      (when-not (string/blank? @extern)
-        [:div
-         [rc/title
-          :label "Extern Output:"
-          :level :level3]
-         [rc/input-textarea
-          :model extern
-          :on-change #()
-          :width "100%"
-          :rows 25]]))))
+      [:div
+       [:div
+        {:class "h3 instruction success"}
+        "Extern Output:"]
+       [rc/input-textarea
+        :model extern
+        :on-change #()
+        :width "100%"
+        :rows 25]])))
 
 (defn error-output []
   (let [error (rf/subscribe [:error-output])]
     (fn []
-      (when-not (string/blank? @error)
-        [:div
-         [rc/title
-          :label "Error Output:"
-          :level :level3]
-         [rc/input-textarea
-          :model error
-          :on-change #()
-          :width "100%"
-          :rows 25]]))))
+      [:div
+       [:div
+        {:class "h3 instruction error"}
+        "Error Output:"]
+       [rc/input-textarea
+        :model error
+        :on-change #()
+        :width "100%"
+        :rows 25]])))
 
 (defn loading-js []
   (let [loading (rf/subscribe [:loading-js])]
@@ -194,8 +192,8 @@
                      (.then
                       acc-deferred
                       (fn [acc]
-                        (.addCallbacks
-                         (handlers/load-scripts [file])
+                        (handlers/load-scripts
+                         [file]
                          (fn success [_]
                            (->deferred acc))
                          (fn error [err]
@@ -215,9 +213,9 @@
   ;; terminate when there are any errors.
   (->deferred
    acc
-   (fn [{:keys [namespace-text] :as acc}]
+   (fn [{:keys [file-list namespace-text] :as acc}]
      (try
-       (assoc acc :extern (handlers/beautify (extract-loaded namespace-text)))
+       (assoc acc :extern (handlers/beautify (extract-loaded-remix namespace-text file-list)))
        (catch :default e
          (update-in acc [:errors] conj (handlers/error-string e)))))))
 
@@ -250,31 +248,41 @@
   of files in dependency order all at once."
   []
   (let [file-list-text (rf/subscribe [:file-list-text])
-        namespace-text (rf/subscribe [:namespace-text])]
+        namespace-text (rf/subscribe [:namespace-text])
+        error (rf/subscribe [:error-output])]
     (fn []
       [rc/v-box
        :gap "10px"
-       :margin "20px"
-       :width "50%"
+       :margin "20px auto"
+       :width "70%"
+       :max-width "600px"
        :children [[rc/title
                    :label "JavaScript Externs Generator"
                    :underline? true
                    :level :level1]
                   [:div
-                   "Enter a list of url dependencies:"
+                   [:div
+                    {:class "h3 instruction"}
+                    "Enter a list of url dependencies:"]
                    [rc/input-textarea
                     :model file-list-text
                     :attr {:id "file-list"}
-                    :on-change #(rf/dispatch [:file-list-text-change %])]]
+                    :on-change #(rf/dispatch [:file-list-text-change %])
+                    :width "100%"
+                    :rows 7]]
                   [:div
-                   "Enter the JavaScript object you want to extern:"
+                   [:div
+                    {:class "h3 instruction"}
+                    "Enter the JavaScript object you want to extern:"]
                    [rc/input-text
                     :model namespace-text
                     :attr {:id "namespace-text"}
-                    :on-change #(rf/dispatch [:namespace-text-change %])]]
+                    :on-change #(rf/dispatch [:namespace-text-change %])
+                    :width "100%"]]
                   [rc/button
                    :label "Extern!"
                    :on-click #(generate-extern-pipeline @file-list-text @namespace-text)]
-                  [externed-output]
-                  [error-output]
+                  (if (string/blank? @error)
+                    [externed-output]
+                    [error-output])
                   ]])))

@@ -9,19 +9,24 @@
             [javascript-externs-generator.extern :refer [extract-loaded]]
             [goog.html.legacyconversions :as lc]))
 
+(defn str->tr-url
+  [url]
+  (lc/trustedResourceUrlFromString url))
+
 (def default-middleware [rf/trim-v])
 
 (defn load-script [url success err]
   (let [sandbox (dom/getElement "sandbox")
-        options #js {:document (obj/get sandbox "contentDocument")}
-        ld (jsloader/safeLoad (lc/trustedResourceUrlFromString url) options)]
-    (.addCallbacks ld success err)))
+        options #js {:document (obj/get sandbox "contentDocument")}]
+    (-> (jsloader/safeLoad (str->tr-url url) options)
+        (.addCallbacks success err))))
 
-(defn load-scripts [urls]
-  (let [trusted-uris (mapv #(goog.html.legacyconversions/trustedResourceUrlFromString %) urls)
+(defn load-scripts [urls success err]
+  (let [trusted-uris (clj->js (mapv str->tr-url urls))
         sandbox (dom/getElement "sandbox")
         options (clj->js {:document   (obj/get sandbox "contentDocument")})]
-    (jsloader/safeLoadMany (clj->js trusted-uris) options)))
+    (-> (jsloader/safeLoadMany trusted-uris options)
+        (.addCallbacks success err))))
 
 (defn error-string [error]
   (let [check-console "Check console for stack trace."]

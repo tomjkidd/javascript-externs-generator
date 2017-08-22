@@ -29,8 +29,18 @@ This is actually pretty neat, because I made it so that I could try to get all o
 
 This entails displaying the error/extern information in the UI in addition to the console so that the console doesn't need to be used.
 
-*** TODO Increase default width of inputs
-*** TODO Add/reuse event for when extern is generated
+*** DONE Increase default width of inputs
+
+The :width property of the rc/input-textarea was able to make this work.
+
+*** DONE Add/reuse event for when extern is generated
+
+The `load-script` and `extract-loaded` and functions were crucial and are really the heart of the work I wanted to use from this repo.
+
+*** DONE Update wrap-extern to provide the list of files used to generate
+
+One of the other pitfalls I experienced is that I wasn't able to reliably reproduce the react-datepickers extern, part of the reason is that people have different styles when it comes to filling in the details of how they configured the javascript-externs-generator.
+For this reason, I capture both inputs in the comments so that it is known.
 
 ** TODO Clean up of Proof-of-concept code
 
