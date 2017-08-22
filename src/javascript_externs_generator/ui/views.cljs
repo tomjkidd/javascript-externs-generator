@@ -2,9 +2,7 @@
   (:require [re-frame.core :as rf]
             [clojure.string :as string]
             [re-com.core :as rc]
-            [goog.async.Deferred]
-            [javascript-externs-generator.ui.handlers :as handlers]
-            [javascript-externs-generator.extern :refer [extract-loaded-remix]]))
+            [javascript-externs-generator.ui.remix :as remix]))
 
 (defn alert-box []
   (let [alert (rf/subscribe [:alert])]
@@ -167,18 +165,6 @@
 
               [externed-namespaces]]])
 
-(defn intercept
-  [x]
-  (.warn js/console x))
-
-(defn ->deferred
-  "Ensure a `goog.async.Deferred` from a possible regular value.
-  Optional callback will be called when Deferred is resolved, defaults to identity"
-  ([x]
-   (->deferred x identity))
-  ([x callback]
-   (goog.async.Deferred/when x callback)))
-
 (defn display-errors
   [acc]
   (rf/dispatch [:externed-output-change (:extern acc)])
@@ -194,74 +180,6 @@
   (.log js/console ":no errors, yay")
   (.log js/console (:extern acc))
   (.log js/console (clj->js acc)))
-
-(defn pipeline-parse-file-list-text
-  [{:keys [file-list-text] :as acc}]
-  (assoc acc :file-list (remove
-                         string/blank?
-                         (mapv string/trim (string/split file-list-text \newline)))))
-
-(defn pipeline-load-js-files
-  "Attempt to load the file-list files sequentially, capturing any load errors."
-  [acc]
-  (->deferred
-   acc
-   (fn [{:keys [file-list] :as acc}]
-     (let [load-all-js-deferred
-           (reduce (fn [acc-deferred file]
-                     (.then
-                      acc-deferred
-                      (fn [acc]
-                        (handlers/load-scripts
-                         [file]
-                         (fn success [_]
-                           (->deferred acc))
-                         (fn error [err]
-                           (->deferred
-                            acc
-                            (fn [acc]
-                              (update-in acc [:errors] conj (-> err .-message))))))
-                        )))
-                   (->deferred acc)
-                   file-list)]
-       load-all-js-deferred))))
-
-(defn pipeline-generate-extern
-  [acc]
-  ;; NOTE: It is assumed that pipeline-load-js-files was run with no errors
-  ;; before this is run. That fn generates no tangible artifacts, and will
-  ;; terminate when there are any errors.
-  (->deferred
-   acc
-   (fn [{:keys [file-list namespace-text] :as acc}]
-     (try
-       (assoc acc :extern (handlers/beautify (extract-loaded-remix namespace-text file-list)))
-       (catch :default e
-         (update-in acc [:errors] conj (handlers/error-string e)))))))
-
-(defn generate-extern-pipeline
-  [file-list-text namespace-text]
-  (->deferred
-   (reduce (fn [deferred-acc cur]
-             (.addCallback deferred-acc
-                           (fn [acc]
-                             ;; wrap to ensure return a deferred acc
-                             (if (seq (:errors acc))
-                               (->deferred acc)
-                               (->deferred (cur acc))))))
-           (->deferred
-            {:file-list-text file-list-text
-             :namespace-text namespace-text
-             :errors         []}
-            identity)
-           [pipeline-parse-file-list-text
-            pipeline-load-js-files
-            pipeline-generate-extern
-            identity])
-   (fn [acc]
-     (if (seq (:errors acc))
-       (display-errors acc)
-       (display-success acc)))))
 
 (defn extern-generator-remix
   "This is an alternate take on the original UI that is optimized for inputing a series
@@ -301,8 +219,13 @@
                     :width "100%"]]
                   [rc/button
                    :label "Extern!"
-                   :on-click #(generate-extern-pipeline @file-list-text @namespace-text)]
+                   :on-click #(remix/generate-extern-pipeline
+                               @file-list-text
+                               @namespace-text
+                               (fn [acc]
+                                 (if (seq (:errors acc))
+                                   (display-errors acc)
+                                   (display-success acc))))]
                   (if (string/blank? @error)
                     [externed-output]
-                    [error-output])
-                  ]])))
+                    [error-output])]])))

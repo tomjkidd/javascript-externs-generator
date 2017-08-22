@@ -24,7 +24,7 @@
 (defn load-scripts [urls success err]
   (let [trusted-uris (clj->js (mapv str->tr-url urls))
         sandbox (dom/getElement "sandbox")
-        options (clj->js {:document   (obj/get sandbox "contentDocument")})]
+        options (clj->js {:document (obj/get sandbox "contentDocument")})]
     (-> (jsloader/safeLoadMany trusted-uris options)
         (.addCallbacks success err))))
 

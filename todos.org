@@ -2,7 +2,7 @@
 
 ** Motivation
 
-I was attempting to update the react-datepicker to version 0.53.0, and while working out which dependencies I needed to get the DatePicker extern to generate, I found myself frustrated because I had to process 5 files, one-at-a-time, every time I wanted to test changes.
+I was attempting to update the react-datepicker to version 0.53.0, and while working out which dependencies I needed to get the DatePicker extern to generate, I found myself frustrated because I had to process 6 files, one-at-a-time, every time I wanted to test if the files I selected were compatible.
 The javascript-externs-generator does all the heavy lifting already, so I decided to use all of that existing code to actually perform the loading of js files and the creation of an extern.
 But I wanted to do it using a simplified workflow that allows you to specify all of the urls at once.
 
@@ -49,9 +49,12 @@ Created a `copy-to-clipboard` function, and a `To Cliboard` button to allow easy
 Searched SO for some ideas
 https://stackoverflow.com/questions/400212/how-do-i-copy-to-the-clipboard-in-javascript
 
-** TODO Clean up of Proof-of-concept code
+** DONE Clean up of Proof-of-concept code
 
-This entails moving it to fit the structure of the existing project
+This entails moving it to fit the structure of the existing project.
+
+Moved the general deferred helper code to `javascript-externs-generator/util`
+Moved the bulk-load helper code to `javascript-externs-generator/ui/remix`
 
 ** TODO Update readme
 
