@@ -3,7 +3,8 @@ set -e
 
 readonly DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly TMP_DIR=$(mktemp -d /tmp/javascript-externs-generator.XXXXXX)
-readonly REPO=git@github.com:jmmk/javascript-externs-generator.git
+#readonly REPO=git@github.com:jmmk/javascript-externs-generator.git
+readonly REPO=https://github.com/tomjkidd/javascript-externs-generator.git
 readonly GIT="git -C $TMP_DIR"
 readonly COMMIT_MSG="Update to latest build"
 
