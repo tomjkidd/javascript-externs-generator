@@ -6,11 +6,11 @@
                  [re-frame "0.5.0"]
                  [re-com "0.5.4"]
                  [cljsjs/js-beautify "1.6.2-0"]
-                 [org.clojure/clojurescript "1.8.51"]]
+                 [org.clojure/clojurescript "1.9.908"]]
 
-  :plugins [[lein-cljsbuild "1.1.2"]
+  :plugins [[lein-cljsbuild "1.1.7"]
             [lein-doo "0.1.6"]
-            [lein-figwheel "0.5.0-6"]]
+            [lein-figwheel "0.5.13"]]
 
   :source-paths ["src"]
 

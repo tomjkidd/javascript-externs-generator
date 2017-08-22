@@ -42,3 +42,18 @@
   :alert
   (fn [db]
     (reaction (:alert @db))))
+
+(rf/register-sub
+ :file-list-text
+ (fn [db]
+   (reaction (:file-list-text @db))))
+
+(rf/register-sub
+ :externed-output
+ (fn [db]
+   (reaction (:externed-output @db))))
+
+(rf/register-sub
+ :error-output
+ (fn [db]
+   (reaction (:error-output @db))))

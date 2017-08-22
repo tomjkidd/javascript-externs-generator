@@ -7,7 +7,7 @@
             [javascript-externs-generator.ui.views :as ui]))
 
 (defn ^:export re-render []
-  (reagent/render [ui/extern-generator] (dom/getElement "extern-generator")))
+  (reagent/render [ui/extern-generator-remix] (dom/getElement "extern-generator")))
 
 (defn ^:export init []
   (rf/dispatch-sync [:initialize])

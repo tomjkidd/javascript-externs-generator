@@ -6,14 +6,26 @@
             [goog.object :as obj]
             [cljsjs.js-beautify]
             [javascript-externs-generator.ui.db :refer [default-state]]
-            [javascript-externs-generator.extern :refer [extract-loaded]]))
+            [javascript-externs-generator.extern :refer [extract-loaded]]
+            [goog.html.legacyconversions :as lc]))
+
+(defn str->tr-url
+  [url]
+  (lc/trustedResourceUrlFromString url))
 
 (def default-middleware [rf/trim-v])
 
 (defn load-script [url success err]
   (let [sandbox (dom/getElement "sandbox")
         options #js {:document (obj/get sandbox "contentDocument")}]
-    (-> (jsloader/load url options)
+    (-> (jsloader/safeLoad (str->tr-url url) options)
+        (.addCallbacks success err))))
+
+(defn load-scripts [urls success err]
+  (let [trusted-uris (clj->js (mapv str->tr-url urls))
+        sandbox (dom/getElement "sandbox")
+        options (clj->js {:document (obj/get sandbox "contentDocument")})]
+    (-> (jsloader/safeLoadMany trusted-uris options)
         (.addCallbacks success err))))
 
 (defn error-string [error]
@@ -117,3 +129,21 @@
   [default-middleware]
   (fn [db [namespace-text]]
     (assoc db :namespace-text namespace-text)))
+
+(rf/register-handler
+ :file-list-text-change
+ [default-middleware]
+ (fn [db [file-list-text]]
+   (assoc db :file-list-text file-list-text)))
+
+(rf/register-handler
+ :externed-output-change
+ [default-middleware]
+ (fn [db [externed-output]]
+   (assoc db :externed-output externed-output)))
+
+(rf/register-handler
+ :error-output-change
+ [default-middleware]
+ (fn [db [error-output]]
+   (assoc db :error-output error-output)))
