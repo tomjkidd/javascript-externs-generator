@@ -27,6 +27,16 @@
        :width "100%"
        :rows 25])))
 
+(defn copy-to-clipboard
+  "Copy the textarea identified by `textarea-selector` to the clipboard
+  Returns true if copied, else false"
+  [textarea-selector]
+  (let [textarea (.querySelector js/document textarea-selector)
+        _        (.select textarea)
+        succeed? (.execCommand js/document "copy")]
+    (.blur textarea)
+    succeed?))
+
 (defn externed-output []
   (let [extern (rf/subscribe [:externed-output])]
     (fn []
@@ -34,7 +44,17 @@
        [:div
         {:class "h3 instruction success"}
         "Extern Output:"]
+       [:div
+        {:style {:margin-bottom "10px"}}
+        (when-not (string/blank? @extern)
+          [rc/button
+           :label "To Clipboard"
+           :on-click #(.log js/console (if (copy-to-clipboard "#extern-textarea")
+                                         "copied to clipboard"
+                                         "not copied to clipboard"))])]
        [rc/input-textarea
+        :attr {:id "extern-textarea"}
+        :style {:margin-bottom "10px"}
         :model extern
         :on-change #()
         :width "100%"

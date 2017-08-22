@@ -42,6 +42,13 @@ The `load-script` and `extract-loaded` and functions were crucial and are really
 One of the other pitfalls I experienced is that I wasn't able to reliably reproduce the react-datepickers extern, part of the reason is that people have different styles when it comes to filling in the details of how they configured the javascript-externs-generator.
 For this reason, I capture both inputs in the comments so that it is known.
 
+*** DONE Add button to copy extern to clipboard
+
+Created a `copy-to-clipboard` function, and a `To Cliboard` button to allow easy access to the generated extern
+
+Searched SO for some ideas
+https://stackoverflow.com/questions/400212/how-do-i-copy-to-the-clipboard-in-javascript
+
 ** TODO Clean up of Proof-of-concept code
 
 This entails moving it to fit the structure of the existing project
